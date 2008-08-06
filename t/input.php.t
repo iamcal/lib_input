@@ -14,7 +14,7 @@
 	include('Flickr/Test/Straps.php');
 	include('lib_input.php');
 
-	plan(144);
+	plan(160);
 
 	ok( 1, "parsed libraries");
 	
@@ -116,23 +116,42 @@
 	
 	# Check for balanced RTL/LTR chars
 	print("# NOTE: output for the next tests may look wrong due to unicode RTL chars\n");
-	is( "\xe2\x80\x8fabcdef\xe2\x80\x8e",input_clean("\xe2\x80\x8fabcdef", 0),"balance string with RTL char but no LTR char" );
-	is( "\xe2\x80\x8eabcdef",input_clean("\xe2\x80\x8eabcdef", 0),"don't touch string with LTR char but no RTL char" );
-	is( "\xe2\x80\x8fabcdef\xe2\x80\x8e",input_clean("\xe2\x80\x8fabcdef\xe2\x80\x8e", 0),"don't touch string with balanced RTL/LTR chars" );
-	is( "\xe2\x80\x8eabcdef\xe2\x80\x8f\xe2\x80\x8e",input_clean("\xe2\x80\x8eabcdef\xe2\x80\x8f", 0),"balance string with balanced LTR then RTL chars" );
-	is( "\xe2\x80\x8fabc\xe2\x80\x8fdef\xe2\x80\x8e",input_clean("\xe2\x80\x8fabc\xe2\x80\x8fdef", 0),"balance string with multiple RTL chars but no LTR char" );
-	is( "\xe2\x80\x8eabc\xe2\x80\x8edef",input_clean("\xe2\x80\x8eabc\xe2\x80\x8edef", 0),"don't touch string with multiple LTR chars but no RTL char" );
-	is( "\xe2\x80\x8fabc\xe2\x80\x8e:\xe2\x80\x8fdef\xe2\x80\x8e",input_clean("\xe2\x80\x8fabc\xe2\x80\x8e:\xe2\x80\x8fdef", 0),"balance string with multiple RTL chars but only one LTR char" );
-	is( "\xe2\x80\x8fabc\xe2\x80\x8e:\xe2\x80\x8fdef\xe2\x80\x8e:\xe2\x80\x8fghi\xe2\x80\x8e",input_clean("\xe2\x80\x8fabc\xe2\x80\x8e:\xe2\x80\x8fdef\xe2\x80\x8e:\xe2\x80\x8fghi", 0),"balance string with multiple RTL chars but less LTR chars" );
+	is( "\xe2\x80\x8fabcdef\xe2\x80\x8e",input_clean("\xe2\x80\x8fabcdef", 0),"[ltr] balance string with U+200F char but no U+200E char" );
+	is( "\xe2\x80\x8fabcdef\xe2\x80\x8e",input_clean("\xe2\x80\x8fabcdef\xe2\x80\x8e", 0),"[ltr] don't touch string with balanced U+200F/U+200E chars" );
+	is( "abcdef\xe2\x80\x8f\xe2\x80\x8e",input_clean("\xe2\x80\x8eabcdef\xe2\x80\x8f", 0),"[ltr] balance string with balanced U+200E then U+200F" );
+	is( "\xe2\x80\x8fabc\xe2\x80\x8fdef\xe2\x80\x8e",input_clean("\xe2\x80\x8fabc\xe2\x80\x8fdef", 0),"[ltr] balance string with multiple U+200F chars but no U+200E char" );
+	is( "abc\xe2\x80\x8edef",input_clean("\xe2\x80\x8eabc\xe2\x80\x8edef", 0),"[ltr] don't balance string with multiple U+200E chars but no U+200F char" );
+	is( "\xe2\x80\x8fabc\xe2\x80\x8e:\xe2\x80\x8fdef\xe2\x80\x8e",input_clean("\xe2\x80\x8fabc\xe2\x80\x8e:\xe2\x80\x8fdef", 0),"[ltr] balance string with multiple U+200F chars but only one U+200E char" );
+	is( "\xe2\x80\x8fabc\xe2\x80\x8e:\xe2\x80\x8fdef\xe2\x80\x8e:\xe2\x80\x8fghi\xe2\x80\x8e",input_clean("\xe2\x80\x8fabc\xe2\x80\x8e:\xe2\x80\x8fdef\xe2\x80\x8e:\xe2\x80\x8fghi", 0),"[ltr] balance string with multiple U+200F chars but less U+200E chars" );
+	is ("abcdef",input_clean("\xe2\x80\x8eabcdef",0),"[ltr] strip leading U+200E character from LTR string" );
 	
-	is( "\xe2\x80\xaeabcdef\xe2\x80\xad",input_clean("\xe2\x80\xaeabcdef", 0),"balance string with RTL char but no LTR char" );
-	is( "\xe2\x80\xadabcdef",input_clean("\xe2\x80\xadabcdef", 0),"don't touch string with LTR char but no RTL char" );
-	is( "\xe2\x80\xaeabcdef\xe2\x80\xad",input_clean("\xe2\x80\xaeabcdef\xe2\x80\xad", 0),"don't touch string with balanced RTL/LTR chars" );
-	is( "\xe2\x80\xadabcdef\xe2\x80\xae\xe2\x80\xad",input_clean("\xe2\x80\xadabcdef\xe2\x80\xae", 0),"balance string with balanced LTR then RTL chars" );
-	is( "\xe2\x80\xaeabc\xe2\x80\xaedef\xe2\x80\xad",input_clean("\xe2\x80\xaeabc\xe2\x80\xaedef", 0),"balance string with multiple RTL chars but no LTR char" );
-	is( "\xe2\x80\xadabc\xe2\x80\xaddef",input_clean("\xe2\x80\xadabc\xe2\x80\xaddef", 0),"don't touch string with multiple LTR chars but no RTL char" );
-	is( "\xe2\x80\xaeabc\xe2\x80\xad:\xe2\x80\xaedef\xe2\x80\xad",input_clean("\xe2\x80\xaeabc\xe2\x80\xad:\xe2\x80\xaedef", 0),"balance string with multiple RTL chars but only one LTR char" );
-	is( "\xe2\x80\xaeabc\xe2\x80\xad:\xe2\x80\xaedef\xe2\x80\xad:\xe2\x80\xaeghi\xe2\x80\xad",input_clean("\xe2\x80\xaeabc\xe2\x80\xad:\xe2\x80\xaedef\xe2\x80\xad:\xe2\x80\xaeghi", 0),"balance string with multiple RTL chars but less LTR chars" );
+	is( "\xe2\x80\xaeabcdef\xe2\x80\xad",input_clean("\xe2\x80\xaeabcdef", 0),"[ltr] balance string with U+202E char but no U+202D char" );
+	is( "\xe2\x80\xaeabcdef\xe2\x80\xad",input_clean("\xe2\x80\xaeabcdef\xe2\x80\xad", 0),"[ltr] don't balance string with balanced U+202E/U+202D chars" );
+	is( "abcdef\xe2\x80\xae\xe2\x80\xad",input_clean("\xe2\x80\xadabcdef\xe2\x80\xae", 0),"[ltr] balance string with balanced U+202D then U+202E chars" );
+	is( "\xe2\x80\xaeabc\xe2\x80\xaedef\xe2\x80\xad",input_clean("\xe2\x80\xaeabc\xe2\x80\xaedef", 0),"[ltr] balance string with multiple U+202E chars but no U+202D char" );
+	is( "abc\xe2\x80\xaddef",input_clean("\xe2\x80\xadabc\xe2\x80\xaddef", 0),"[ltr] don't balance string with multiple U+202D chars but no U+202E char" );
+	is( "\xe2\x80\xaeabc\xe2\x80\xad:\xe2\x80\xaedef\xe2\x80\xad",input_clean("\xe2\x80\xaeabc\xe2\x80\xad:\xe2\x80\xaedef", 0),"[ltr] balance string with multiple U+202E chars but only one U+202D char" );
+	is( "\xe2\x80\xaeabc\xe2\x80\xad:\xe2\x80\xaedef\xe2\x80\xad:\xe2\x80\xaeghi\xe2\x80\xad",input_clean("\xe2\x80\xaeabc\xe2\x80\xad:\xe2\x80\xaedef\xe2\x80\xad:\xe2\x80\xaeghi", 0),"[ltr] balance string with multiple U+202E chars but less U+202D chars" );
+	is ("abc",input_clean("\xe2\x80\xadabc",0),"[ltr] strip leading U+202D character from LTR string" );
+	
+	is( "\xe2\x80\x8eabcdef\xe2\x80\x8f",input_clean("\xe2\x80\x8eabcdef", 0, 'rtl'),"[rtl] balance string with U+200E char but no U+200F char" );
+	is( "\xe2\x80\x8eabcdef\xe2\x80\x8f",input_clean("\xe2\x80\x8eabcdef\xe2\x80\x8f", 0, 'rtl'),"[rtl] don't touch string with balanced U+200E/U+200F chars" );
+	is( "abcdef\xe2\x80\x8e\xe2\x80\x8f",input_clean("\xe2\x80\x8fabcdef\xe2\x80\x8e", 0, 'rtl'),"[rtl] balance string with balanced U+200F then U+200E" );
+	is( "\xe2\x80\x8eabc\xe2\x80\x8edef\xe2\x80\x8f",input_clean("\xe2\x80\x8eabc\xe2\x80\x8edef", 0, 'rtl'),"[rtl] balance string with multiple U+200E chars but no U+200F char" );
+	is( "abc\xe2\x80\x8fdef",input_clean("\xe2\x80\x8fabc\xe2\x80\x8fdef", 0, 'rtl'),"[rtl] don't balance string with multiple U+200F chars but no U+200E char" );
+	is( "\xe2\x80\x8eabc\xe2\x80\x8f:\xe2\x80\x8edef\xe2\x80\x8f",input_clean("\xe2\x80\x8eabc\xe2\x80\x8f:\xe2\x80\x8edef", 0, 'rtl'),"[rtl] balance string with multiple U+200E chars but only one U+200F char" );
+	is( "\xe2\x80\x8eabc\xe2\x80\x8f:\xe2\x80\x8edef\xe2\x80\x8f:\xe2\x80\x8eghi\xe2\x80\x8f",input_clean("\xe2\x80\x8eabc\xe2\x80\x8f:\xe2\x80\x8edef\xe2\x80\x8f:\xe2\x80\x8eghi", 0, 'rtl'),"[rtl] balance string with multiple U+200E chars but less U+200F chars" );
+	is ("abcdef",input_clean("\xe2\x80\x8fabcdef",0, 'rtl'),"[rtl] strip leading U+200F character from RTL string" );
+
+	is( "\xe2\x80\xadabcdef\xe2\x80\xae",input_clean("\xe2\x80\xadabcdef", 0, 'rtl'),"[rtl] balance string with U+202D char but no U+202E char" );
+	is( "\xe2\x80\xadabcdef\xe2\x80\xae",input_clean("\xe2\x80\xadabcdef\xe2\x80\xae", 0, 'rtl'),"[rtl] don't balance string with balanced U+202D/U+202E chars" );
+	is( "abcdef\xe2\x80\xad\xe2\x80\xae",input_clean("\xe2\x80\xaeabcdef\xe2\x80\xad", 0, 'rtl'),"[rtl] balance string with balanced U+202E then U+202D chars" );
+	is( "\xe2\x80\xadabc\xe2\x80\xaddef\xe2\x80\xae",input_clean("\xe2\x80\xadabc\xe2\x80\xaddef", 0, 'rtl'),"[rtl] balance string with multiple U+202D chars but no U+202E char" );
+	is( "abc\xe2\x80\xaedef",input_clean("\xe2\x80\xaeabc\xe2\x80\xaedef", 0, 'rtl'),"[rtl] don't balance string with multiple U+202E chars but no U+202D char" );
+	is( "\xe2\x80\xadabc\xe2\x80\xae:\xe2\x80\xaddef\xe2\x80\xae",input_clean("\xe2\x80\xadabc\xe2\x80\xae:\xe2\x80\xaddef", 0, 'rtl'),"[rtl] balance string with multiple U+202D chars but only one U+202E char" );
+	is( "\xe2\x80\xadabc\xe2\x80\xae:\xe2\x80\xaddef\xe2\x80\xae:\xe2\x80\xadghi\xe2\x80\xae",input_clean("\xe2\x80\xadabc\xe2\x80\xae:\xe2\x80\xaddef\xe2\x80\xae:\xe2\x80\xadghi", 0, 'rtl'),"[rtl] balance string with multiple U+202D chars but less U+202E chars" );
+	is ("abc",input_clean("\xe2\x80\xaeabc",0, 'rtl'),"[rtl] strip leading U+202E character from RTL string" );
+
 	print("# \xe2\x80\x8e\xe2\x80\xad output should be fine from here\n");
 
 ?>

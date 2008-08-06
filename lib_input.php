@@ -18,7 +18,7 @@
 	# unexpected control characters.
 	#
 
-	function input_clean($data, $allow_lines=0){
+	function input_clean($data, $allow_lines=0, $direction = 'ltr'){
 
 		#
 		# ftp://ftp.rfc-editor.org/in-notes/rfc3454.txt, section 5 is incredibly useful here
@@ -53,37 +53,72 @@
 			$data = preg_replace(         '/([\x00-\x1f\x7f]|\xEF\xBF[\xb9-\xbc]|\xe2\x81[\xA0-\xAF]|\xc2[\x80-\x9f])/', '', $data);
 		}
 
-		# RIGHT TO LEFT MARKS (U+200F and U+200E)
-		# We need to close these off (ie, add a LTR mark) to any user-input text
-		# So that their text doesn't then reverse the word-order of every sentence
-		# output after it...
 		#
-		# This DOES NOT balance LTR characters because we're currently a LTR-only site
-		# and in all honesty, the chances of us branching into RTL languages are 
-		# pretty remote right now. If we ever did support RTL languages in the interface,
-		# it would probably be simpler to bracket each in-site translation with 
-		# [RTL][string][LTR] than to play with filtering here.
-		
-		$rtl_pairs = array(	"\xe2\x80\x8f" => "\xe2\x80\x8e",
-					"\xe2\x80\xae" => "\xe2\x80\xad",
-				);
+		# RIGHT TO LEFT MARKS (U+200F and U+202E)
+		#                 == OR ==
+		# LEFT TO RIGHT MARKS (U+200E and U+202D)
+		#
+		# We need to close these off (ie, add an opposing mark) in any user-input text
+		# which doesn't have balanced pairs, so that their text doesn't then reverse 
+		# the word-order of every sentence output after it...
+		#
+		#
+		# NOTE: This is an either/or thing - you specify which direction you wish to
+		# balance by using the third paramter in the function call. It defaults to working for 
+		# 'LTR' text (eg. English).
+		#
+		# If you deal with both LTR and RTL languages (eg, you have a site with both English
+		# and Hebrew interfaces) you'll need to make the right selection when calling this function.
+		#
+		#
+		# ALSO NOTE: This only adds a closing mark, rather than trying to balance all pairs. 
+		# So this text...
+		#
+		# Hello [rtl]this is[rtl] a test
+		#
+		# ...would become...
+		#
+		# Hello [rtl]this is[rtl] a test[ltr]
+		#
+		# ...which is still unbalanced and a little weird, but won't mess up your output.
+		#
 
-		foreach ($rtl_pairs as $rtl => $ltr){
-			if (preg_match("/$rtl/", $data)){
-				$fragments = explode($rtl, $data);
-				if (!preg_match("/$ltr/", $fragments[count($fragments)-1])){
-					$data .= $ltr;
+		if ($direction == 'rtl'){
+			$dir_pairs = array(	"\xe2\x80\x8e" => "\xe2\x80\x8f",
+						"\xe2\x80\xad" => "\xe2\x80\xae",
+					);
+		} else {
+			$dir_pairs = array(	"\xe2\x80\x8f" => "\xe2\x80\x8e",
+						"\xe2\x80\xae" => "\xe2\x80\xad",
+					);
+		}
+
+		foreach ($dir_pairs as $open => $close){
+			if (preg_match("/$open/", $data)){
+				$fragments = explode($open, $data);
+				if (!preg_match("/$close/", $fragments[count($fragments)-1])){
+					$data .= $close;
 				}
 			}
 		}
+		
+		#
+		# BONUS! - we shouldn't need leading marks which match our default directionality.
+		#
 
+		foreach (array_values($dir_pairs) as $mark){
+			$data = preg_replace("/^$mark+/",'',$data);
+		}
+
+		#
 		# in theory we might also want to filter out:
 		#  U+06DD - ARABIC END OF AYAH
 		#  U+070F - SYRIAC ABBREVIATION MARK
 		#  U+180E - MONGOLIAN VOWEL SEPARATOR
 		# but it doesn't look like they'll screw up the output, and someone somewhere might actually
 		# use them...
-
+		#
+		
 		return input_verify_utf8($data);
 	}
 
