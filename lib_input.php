@@ -44,13 +44,22 @@
 		# various invisible and/or control chars (U+2060 - U+206F) (with a couple of non-valid characters in the middle)
 		# unicode control chars (U+0080 - U+009F)
 		# unicode control chars (U+FFF9 - U+FFFC)
+		# unicode "replacement character" (U+FFFD)
+		#
+		# IMPORTANT - U+FFFD is, in theory, a perfectly legal character, but we've found that various systems choke on input
+		# which contains it, either treating it as an "end of input" mark, or becoming confused about encoding of the whole text.
+		#
+		# Since it's only an "I don't know what was supposed to be here" mark, we feel fine with dropping it, but if you have
+		# an application in which these marks are required, you may want to alter these lines so that U+FFFD isn't stripped out.
+		#
+		# (to accomplish that, change "\xEF\xBF[\xb9-\xbd]" to "\xEF\xBF[\xb9-\xbc]" on lines 60 and 62)
 		#
 		
-		#			       ( ascii ctl chars    DEL | U+FFF9 - U+FFFC   | U+2060 - U+206F   | U+0080 - U+009F)
+		#			       ( ascii ctl chars    DEL | U+FFF9 - U+FFFD   | U+2060 - U+206F   | U+0080 - U+009F)
 		if ($allow_lines){
-			$data = preg_replace('/([\x00-\x09\x0b-\x1f\x7f]|\xEF\xBF[\xb9-\xbc]|\xe2\x81[\xA0-\xAF]|\xc2[\x80-\x9f])/', '', $data);
+			$data = preg_replace('/([\x00-\x09\x0b-\x1f\x7f]|\xEF\xBF[\xb9-\xbd]|\xe2\x81[\xA0-\xAF]|\xc2[\x80-\x9f])/', '', $data);
 		}else{
-			$data = preg_replace(         '/([\x00-\x1f\x7f]|\xEF\xBF[\xb9-\xbc]|\xe2\x81[\xA0-\xAF]|\xc2[\x80-\x9f])/', '', $data);
+			$data = preg_replace(         '/([\x00-\x1f\x7f]|\xEF\xBF[\xb9-\xbd]|\xe2\x81[\xA0-\xAF]|\xc2[\x80-\x9f])/', '', $data);
 		}
 
 		#

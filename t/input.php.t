@@ -112,7 +112,7 @@
 	is( "!!",input_clean("!\xef\xbf\xba!",0),"strip unicode U+FFFa");
 	is( "!!",input_clean("!\xef\xbf\xbb!",0),"strip unicode U+FFFb");
 	is( "!!",input_clean("!\xef\xbf\xbc!",0),"strip unicode U+FFFc");
-	is( "!\xef\xbf\xbd!",input_clean("!\xef\xbf\xbd!",0),"don't strip unicode U+FFFD (boundary)");
+	is( "!!",input_clean("!\xef\xbf\xbd!",0),"strip unicode U+FFFd");
 	
 	# Check for balanced RTL/LTR chars
 	print("# NOTE: output for the next tests may look wrong due to unicode RTL chars\n");
