@@ -63,60 +63,55 @@
 		}
 
 		#
-		# RIGHT TO LEFT MARKS (U+200F and U+202E)
-		#                 == OR ==
-		# LEFT TO RIGHT MARKS (U+200E and U+202D)
+		# Balance unicode bidi markers (see http://www.iamcal.com/understanding-bidirectional-text/)
 		#
-		# We need to close these off (ie, add an opposing mark) in any user-input text
-		# which doesn't have balanced pairs, so that their text doesn't then reverse 
-		# the word-order of every sentence output after it...
+		# LRE - U+202A - 0xE2 0x80 0xAA
+		# RLE - U+202B - 0xE2 0x80 0xAB
+		# LRO - U+202D - 0xE2 0x80 0xAD
+		# RLO - U+202E - 0xE2 0x80 0xAE
 		#
+		# PDF - U+202C - 0xE2 0x80 0xAC
 		#
-		# NOTE: This is an either/or thing - you specify which direction you wish to
-		# balance by using the third paramter in the function call. It defaults to working for 
-		# 'LTR' text (eg. English).
+		# We shouldn't need to worry about:
 		#
-		# If you deal with both LTR and RTL languages (eg, you have a site with both English
-		# and Hebrew interfaces) you'll need to make the right selection when calling this function.
-		#
-		#
-		# ALSO NOTE: This only adds a closing mark, rather than trying to balance all pairs. 
-		# So this text...
-		#
-		# Hello [rtl]this is[rtl] a test
-		#
-		# ...would become...
-		#
-		# Hello [rtl]this is[rtl] a test[ltr]
-		#
-		# ...which is still unbalanced and a little weird, but won't mess up your output.
+		# LRM - U+200E
+		# RLM - U+200F
 		#
 
-		if ($direction == 'rtl'){
-			$dir_pairs = array(	"\xe2\x80\x8e" => "\xe2\x80\x8f",
-						"\xe2\x80\xad" => "\xe2\x80\xae",
-					);
-		} else {
-			$dir_pairs = array(	"\xe2\x80\x8f" => "\xe2\x80\x8e",
-						"\xe2\x80\xae" => "\xe2\x80\xad",
-					);
-		}
+		$explicits	= '\xE2\x80\xAA|\xE2\x80\xAB|\xE2\x80\xAD|\xE2\x80\xAE';
+		$pdf		= '\xE2\x80\xAC';
 
-		foreach ($dir_pairs as $open => $close){
-			if (preg_match("/$open/", $data)){
-				$fragments = explode($open, $data);
-				if (!preg_match("/$close/", $fragments[count($fragments)-1])){
-					$data .= $close;
+		preg_match_all("!$explicits!",	$data, $m1, PREG_OFFSET_CAPTURE | PREG_SET_ORDER);
+		preg_match_all("!$pdf!", 	$data, $m2, PREG_OFFSET_CAPTURE | PREG_SET_ORDER);
+
+		if (count($m1) || count($m2)){
+
+			$p = array();
+			foreach ($m1 as $m){ $p[$m[0][1]] = 'push'; }
+			foreach ($m2 as $m){ $p[$m[0][1]] = 'pop'; }
+			ksort($p);
+
+			$offset = 0;
+			$stack = 0;
+			foreach ($p as $pos => $type){
+
+				if ($type == 'push'){
+					$stack++;
+				}else{
+					if ($stack){
+						$stack--;
+					}else{
+						# we have a pop without a push - remove it
+						$data = substr($data, 0, $pos-$offset).substr($data, $pos+3-$offset);
+						$offset += 3;
+					}
 				}
 			}
-		}
-		
-		#
-		# BONUS! - we shouldn't need leading marks which match our default directionality.
-		#
 
-		foreach (array_values($dir_pairs) as $mark){
-			$data = preg_replace("/^$mark+/",'',$data);
+			# now add some pops if your stack is bigger than 0
+			for ($i=0; $i<$stack; $i++){
+				$data .= "\xE2\x80\xAC";
+			}
 		}
 
 		#
